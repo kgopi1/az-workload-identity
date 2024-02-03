@@ -1,6 +1,6 @@
 name: terraform-pipeline
 
-on: workflow_dispatch
+on: push
 
 jobs:
   terraform-pipeline:
