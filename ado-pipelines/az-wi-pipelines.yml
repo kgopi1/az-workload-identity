@@ -1,0 +1,55 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger: none 
+
+
+parameters:
+  - name: armConnection
+    displayName: arm-service-armConnection
+    default: sp-arm
+    values:
+      - sp-arm
+      - awi-connection 
+      - awi-terraform
+
+pool: Default 
+
+stages:
+  - stage: TF_Plain
+    displayName: TF-Plan
+    jobs:
+    - job: tfplan_job
+      steps:
+        - task: AzureCLI@2
+          displayName:  tf-plan
+          inputs:
+            azureSubscription: ${{ parameters.armConnection }}
+            addSpnToEnvironment: true 
+            scriptType: 'bash'
+            visibleAzLogin: false 
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              terraform init 
+              terraform plan
+            workingDirectory: '$(System.DefaultWorkingDirectory)/infra'
+
+  # Apply Job .           
+    - job: tfapply_job
+      displayName: tf-apply 
+      dependsOn: tfplan_job
+      steps:
+        - task: AzureCLI@2
+          displayName:  tf-apply
+          inputs:
+            azureSubscription: ${{ parameters.armConnection }}
+            addSpnToEnvironment: true 
+            scriptType: 'bash'
+            visibleAzLogin: false 
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              terraform init 
+              terraform apply -auto-approve 
+            workingDirectory: '$(System.DefaultWorkingDirectory)/infra'
